@@ -1,5 +1,10 @@
-from pathlib import Path
-
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
-WORK_DIR = PROJECT_ROOT / "watermark_workspace"
-WORK_DIR.mkdir(exist_ok=True)
+MAX_REQUEST_BYTES = 64 * 1024 * 1024
+MAX_SOCIAL_BYTES = 64 * 1024 * 1024
+MAX_CANVAS_WIDTH = 1280
+MAX_CANVAS_HEIGHT = 1080
+VIDEO_FPS = 30
+VIDEO_MAX_SECONDS = 30
+FFMPEG_TIMEOUT_SECONDS = 150
+ALLOWED_IMAGE_EXTS = {".jpg", ".jpeg", ".png", ".webp"}
+ALLOWED_VIDEO_EXTS = {".mp4", ".mov", ".webm"}
+ALLOWED_MEDIA_EXTS = ALLOWED_IMAGE_EXTS | ALLOWED_VIDEO_EXTS | {".bmp", ".avi", ".mkv"}

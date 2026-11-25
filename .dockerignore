@@ -1,0 +1,10 @@
+.git
+.venv
+node_modules
+watermark_workspace
+__pycache__
+**/__pycache__
+*.py[cod]
+tests
+.env
+.env.*

@@ -3,8 +3,6 @@ from pathlib import Path
 
 from PIL import Image, ImageDraw, ImageFont
 
-from watermark_app.config import WORK_DIR
-
 WATERMARK_POSITIONS = ("top-left", "top-right", "center", "bottom-left", "bottom-right")
 
 
@@ -38,13 +36,17 @@ def build_watermark_png(
     text: str,
     logo_path: Path | None,
     opacity: int,
+    output_dir: Path,
     position: str = "top-right",
 ) -> Path:
     """Generates a transparent full-frame RGBA watermark overlay."""
     overlay = Image.new("RGBA", (w, h), (0, 0, 0, 0))
 
     if logo_path and logo_path.exists():
-        logo = Image.open(logo_path).convert("RGBA")
+        with Image.open(logo_path) as source:
+            if source.width * source.height > 12_000_000:
+                raise ValueError("Logo exceeds the supported 12-megapixel resolution.")
+            logo = source.convert("RGBA")
         target_w = max(64, w // 7)
         ratio = target_w / logo.width
         logo = logo.resize((target_w, int(logo.height * ratio)), Image.Resampling.LANCZOS)
@@ -72,6 +74,6 @@ def build_watermark_png(
         draw.text((draw_x + 2, draw_y + 2), text, font=font, fill=(0, 0, 0, opacity))
         draw.text((draw_x, draw_y), text, font=font, fill=(255, 255, 255, opacity))
 
-    wm_path = WORK_DIR / f"wm_{uuid.uuid4().hex}.png"
+    wm_path = output_dir / f"wm_{uuid.uuid4().hex}.png"
     overlay.save(wm_path, "PNG")
     return wm_path

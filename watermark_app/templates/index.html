@@ -3,53 +3,186 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Pro Media Watermarker</title>
+  <meta name="theme-color" content="#020617">
+  <title>Media Watermark Studio</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/tailwind.generated.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
   <script src="{{ url_for('static', filename='js/app.js') }}" defer></script>
 </head>
 <body>
-  <main class="page">
-    <form action="/watermark" method="post" enctype="multipart/form-data" class="watermark-form">
-      <h1>Media Watermark Studio</h1>
-      <p class="intro">Upload any image or video and choose where your text or logo appears.</p>
+  <main class="app-shell mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8">
+    <header class="site-header">
+      <a class="brand" href="/">
+        <span class="brand-mark" aria-hidden="true">W</span>
+        <span>Media Studio</span>
+      </a>
+      <span class="header-note">Private by design · Files are temporary</span>
+    </header>
 
-      {% if error_message %}
-      <div class="alert alert-error" role="alert" data-alert-message>{{ error_message }}</div>
-      {% endif %}
+    <section class="hero">
+      <p class="eyebrow">Create · Compose · Share</p>
+      <h1>Make your media <span>stand out.</span></h1>
+      <p>Watermark a single file, create a multi-media collage, or fetch a public post you have permission to use.</p>
+    </section>
 
-      <div class="field">
-        <label for="media">1. Image or Video File *</label>
-        <input id="media" type="file" name="media" accept="image/*,video/*" required>
+    {% if error_message %}
+    <div class="alert alert-error" role="alert" data-alert-message>{{ error_message }}</div>
+    {% endif %}
+
+    <section class="panel rounded-2xl border border-slate-700 bg-slate-900 p-6" aria-labelledby="single-title">
+      <div class="panel-heading">
+        <div>
+          <p class="eyebrow">01 · Quick edit</p>
+          <h2 id="single-title">Single-file watermark</h2>
+          <p>Apply a text or logo watermark to one image or video.</p>
+        </div>
       </div>
+      <form action="/watermark" method="post" enctype="multipart/form-data" class="form-grid">
+        <div class="field field-wide">
+          <label for="single-media">Image or video</label>
+          <input id="single-media" type="file" name="media" accept="image/*,video/*" required>
+        </div>
+        <div class="field">
+          <label for="single-text">Watermark text</label>
+          <input id="single-text" type="text" name="text" value="© Brand Name">
+        </div>
+        <div class="field">
+          <label for="single-logo">Logo (optional)</label>
+          <input id="single-logo" type="file" name="logo" accept="image/*">
+        </div>
+        <div class="field">
+          <label for="position">Watermark position</label>
+          <select id="position" name="position">
+            <option value="top-left">Top left</option>
+            <option value="top-right" selected>Top right</option>
+            <option value="center">Center</option>
+            <option value="bottom-left">Bottom left</option>
+            <option value="bottom-right">Bottom right</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="opacity">Opacity <output id="opacity-value">180</output></label>
+          <input id="opacity" type="range" name="opacity" min="40" max="255" value="180">
+        </div>
+        <div class="field field-wide">
+          <button type="submit" class="button button-primary">Apply watermark &amp; download</button>
+        </div>
+      </form>
+    </section>
 
-      <div class="field">
-        <label for="text">2A. Custom Watermark Text</label>
-        <input id="text" type="text" name="text" value="© Brand Name">
+    <section class="panel rounded-2xl border border-slate-700 bg-slate-900 p-6" aria-labelledby="collage-title">
+      <div class="panel-heading">
+        <div>
+          <p class="eyebrow">02 · Auto layout</p>
+          <h2 id="collage-title">Build a collage</h2>
+          <p>Add 1–4 images or videos. The grid updates automatically; replace or remove any item before rendering.</p>
+        </div>
+        <span class="count-pill" id="collage-count">0 / 4 files</span>
       </div>
+      <form id="collage-form" class="form-grid">
+        <div class="field field-wide">
+          <label for="collage-files">Choose up to four files</label>
+          <input id="collage-files" type="file" accept=".jpg,.jpeg,.png,.webp,.mp4,.mov,.webm" multiple>
+          <p class="help">JPG, PNG, WebP, MP4, MOV, or WebM · 64 MB total maximum</p>
+          <input id="replace-file" type="file" accept=".jpg,.jpeg,.png,.webp,.mp4,.mov,.webm" hidden>
+        </div>
 
-      <div class="field">
-        <label for="logo">2B. Or Upload Logo PNG (Overrides Text)</label>
-        <input id="logo" type="file" name="logo" accept="image/*">
+        <div class="preview-wrap field-wide">
+          <div class="preview-topline">
+            <strong>Live layout preview</strong>
+            <label class="inline-field" for="canvas-preset">
+              Canvas
+              <select id="canvas-preset" name="canvas">
+                <option value="landscape">Landscape · 1280 × 720</option>
+                <option value="square">Square · 1080 × 1080</option>
+              </select>
+            </label>
+          </div>
+          <div id="collage-preview" class="collage-preview" aria-label="Collage preview">
+            <p class="empty-preview">Select media to preview the automatic layout.</p>
+          </div>
+          <p id="collage-message" class="message" role="status" aria-live="polite"></p>
+        </div>
+
+        <fieldset class="banner-settings field-wide">
+          <legend>Lower-third dual-band banner</legend>
+          <div class="banner-fields">
+            <div class="field">
+              <label for="banner-title">Title · top band</label>
+              <input id="banner-title" name="title" type="text" maxlength="300" value="Your title">
+            </div>
+            <div class="field">
+              <label for="banner-description">Description · bottom band</label>
+              <input id="banner-description" name="description" type="text" maxlength="500" value="A short description">
+            </div>
+            <div class="field color-field">
+              <label for="top-color">Top-band color</label>
+              <input id="top-color" name="top_color" type="color" value="#312e81">
+              <div class="swatches" data-color-target="top-color">
+                <button type="button" class="swatch" style="--swatch:#312e81" data-color="#312e81" aria-label="Indigo"></button>
+                <button type="button" class="swatch" style="--swatch:#0f766e" data-color="#0f766e" aria-label="Teal"></button>
+                <button type="button" class="swatch" style="--swatch:#9f1239" data-color="#9f1239" aria-label="Rose"></button>
+                <button type="button" class="swatch" style="--swatch:#111827" data-color="#111827" aria-label="Charcoal"></button>
+              </div>
+            </div>
+            <div class="field">
+              <label for="top-opacity">Top-band opacity <output id="top-opacity-value">210</output></label>
+              <input id="top-opacity" name="top_opacity" type="range" min="0" max="255" value="210">
+            </div>
+            <div class="field color-field">
+              <label for="bottom-color">Bottom-band color</label>
+              <input id="bottom-color" name="bottom_color" type="color" value="#0f172a">
+              <div class="swatches" data-color-target="bottom-color">
+                <button type="button" class="swatch" style="--swatch:#0f172a" data-color="#0f172a" aria-label="Slate"></button>
+                <button type="button" class="swatch" style="--swatch:#1d4ed8" data-color="#1d4ed8" aria-label="Blue"></button>
+                <button type="button" class="swatch" style="--swatch:#166534" data-color="#166534" aria-label="Green"></button>
+                <button type="button" class="swatch" style="--swatch:#7c2d12" data-color="#7c2d12" aria-label="Brown"></button>
+              </div>
+            </div>
+            <div class="field">
+              <label for="bottom-opacity">Bottom-band opacity <output id="bottom-opacity-value">220</output></label>
+              <input id="bottom-opacity" name="bottom_opacity" type="range" min="0" max="255" value="220">
+            </div>
+            <div class="field field-wide">
+              <label for="brand-logo">Brand logo (optional)</label>
+              <input id="brand-logo" name="brand_logo" type="file" accept=".jpg,.jpeg,.png,.webp">
+            </div>
+          </div>
+        </fieldset>
+        <div class="field field-wide">
+          <button id="collage-submit" type="submit" class="button button-primary">Render collage &amp; download</button>
+        </div>
+      </form>
+    </section>
+
+    <section class="panel rounded-2xl border border-slate-700 bg-slate-900 p-6" aria-labelledby="social-title">
+      <div class="panel-heading">
+        <div>
+          <p class="eyebrow">03 · Public media</p>
+          <h2 id="social-title">Social &amp; YouTube downloader</h2>
+          <p>Inspect a public link and choose an available MP4 quality. Only download content you own or are authorized to use.</p>
+        </div>
       </div>
-
-      <div class="field">
-        <label for="position">Watermark Position</label>
-        <select id="position" name="position">
-          <option value="top-left">Left top</option>
-          <option value="top-right" selected>Right top</option>
-          <option value="center">Center</option>
-          <option value="bottom-left">Bottom left</option>
-          <option value="bottom-right">Bottom right</option>
-        </select>
+      <form id="social-inspect-form" class="form-grid">
+        <div class="field field-wide">
+          <label for="social-url">YouTube, Instagram, TikTok, X, or Facebook link</label>
+          <div class="url-row">
+            <input id="social-url" type="url" placeholder="https://..." required>
+            <button type="submit" class="button button-secondary">Inspect link</button>
+          </div>
+          <p id="social-message" class="message" role="status" aria-live="polite"></p>
+        </div>
+      </form>
+      <div id="social-options" class="social-options" hidden>
+        <p id="social-title-preview" class="media-title"></p>
+        <div class="url-row">
+          <label class="sr-only" for="social-format">Video quality</label>
+          <select id="social-format"></select>
+          <button id="social-download" type="button" class="button button-primary">Download to device</button>
+        </div>
       </div>
-
-      <div class="field">
-        <label for="opacity">Opacity (<span id="opacity-value">180</span>)</label>
-        <input id="opacity" type="range" name="opacity" min="40" max="255" value="180">
-      </div>
-
-      <button type="submit">Apply Watermark &amp; Download</button>
-    </form>
+    </section>
+    <footer>Uploads and rendered media are processed in temporary request storage.</footer>
   </main>
 </body>
 </html>

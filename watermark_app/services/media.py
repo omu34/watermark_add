@@ -5,11 +5,11 @@ from pathlib import Path
 
 from PIL import Image
 
-from watermark_app.config import WORK_DIR
 from watermark_app.services.watermark import build_watermark_png
 
 IMAGE_EXTS = {".jpg", ".jpeg", ".png", ".webp", ".bmp"}
 VIDEO_EXTS = {".mp4", ".mov", ".avi", ".mkv", ".webm"}
+MAX_IMAGE_PIXELS = 12_000_000
 
 
 class VideoToolUnavailableError(RuntimeError):
@@ -49,15 +49,19 @@ def process_media(
     text: str,
     logo_path: Path | None,
     opacity: int,
+    output_dir: Path,
     position: str = "top-right",
 ) -> Path:
     ext = media_path.suffix.lower()
-    out_path = WORK_DIR / f"out_{uuid.uuid4().hex}{ext}"
+    out_path = output_dir / f"out_{uuid.uuid4().hex}{ext}"
 
     if ext in IMAGE_EXTS:
-        base = Image.open(media_path).convert("RGBA")
+        with Image.open(media_path) as source:
+            if source.width * source.height > MAX_IMAGE_PIXELS:
+                raise ValueError("Image exceeds the supported 12-megapixel resolution.")
+            base = source.convert("RGBA")
         wm_path = build_watermark_png(
-            base.width, base.height, text, logo_path, opacity, position
+            base.width, base.height, text, logo_path, opacity, output_dir, position
         )
         wm = Image.open(wm_path)
         merged = Image.alpha_composite(base, wm)
@@ -70,7 +74,7 @@ def process_media(
     if ext in VIDEO_EXTS:
         w, h = get_video_dimensions(media_path)
         require_video_tool("ffmpeg")
-        wm_path = build_watermark_png(w, h, text, logo_path, opacity, position)
+        wm_path = build_watermark_png(w, h, text, logo_path, opacity, output_dir, position)
         cmd = [
             "ffmpeg",
             "-y",

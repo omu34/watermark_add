@@ -1,0 +1,10 @@
+{
+  "name": "watermark-studio-frontend",
+  "private": true,
+  "scripts": {
+    "build:css": "tailwindcss -i ./watermark_app/static/css/tailwind.css -o ./watermark_app/static/css/tailwind.generated.css --minify"
+  },
+  "devDependencies": {
+    "tailwindcss": "3.4.17"
+  }
+}
